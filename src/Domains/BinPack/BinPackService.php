@@ -27,7 +27,7 @@ class BinPackService implements BinPackServiceInterface
     /**
      * @inheritDoc
      */
-    public function getSmallestBoxForProducts(array $products): Packaging
+    public function getSmallestPackaging(array $products): Packaging
     {
         if (!$products) {
             throw new \InvalidArgumentException('No products found');

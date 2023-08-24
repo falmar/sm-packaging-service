@@ -64,7 +64,7 @@ class Application
         $body = null;
 
         try {
-            $package = $this->service->getSmallestBoxForProducts(
+            $package = $this->service->getSmallestPackaging(
                 $products
             );
 

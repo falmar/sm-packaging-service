@@ -15,7 +15,7 @@ interface BinPackServiceInterface
      * @return Packaging
      * @throws PackagingNotFound
      */
-    public function getSmallestBoxForProducts(array $products): Packaging;
+    public function getSmallestPackaging(array $products): Packaging;
 
     /**
      * Get the cached packaging for the given hash.
