@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\ValueObjects;
+namespace App\Domains\BinPack\ValueObjects\API;
 
 class Bin implements \JsonSerializable
 {
@@ -15,6 +15,7 @@ class Bin implements \JsonSerializable
     public int $quantity = 1;
     public ?float $cost = null;
     public string $type = 'pallet';
+    public float $usedVolume = 0;
 
     public function __construct(
         string|int $id,
@@ -26,7 +27,8 @@ class Bin implements \JsonSerializable
         float $weight = 0,
         int $quantity = 1,
         ?float $cost = null,
-        string $type = 'pallet'
+        string $type = 'pallet',
+        float $usedVolume = 0
     ) {
         $this->id = $id;
         $this->width = $width;
@@ -38,8 +40,12 @@ class Bin implements \JsonSerializable
         $this->quantity = $quantity;
         $this->cost = $cost;
         $this->type = $type;
+        $this->usedVolume = $usedVolume;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [
@@ -53,9 +59,13 @@ class Bin implements \JsonSerializable
             'q' => $this->quantity,
             'cost' => $this->cost,
             'type' => $this->type,
+            'used_volume' => $this->usedVolume,
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function jsonSerialize(): array
     {
         return $this->toArray();

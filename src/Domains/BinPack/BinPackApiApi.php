@@ -2,10 +2,13 @@
 
 namespace App\Domains\BinPack;
 
+use App\Domains\BinPack\Entities\Packaging;
 use App\Domains\BinPack\Exceptions\ApiErrorException;
 use App\Domains\BinPack\Specs\PackShipmentInput;
 use App\Domains\BinPack\Specs\PackShipmentOutput;
-use App\Domains\ValueObjects\Bin;
+use App\Domains\BinPack\ValueObjects\API\Bin;
+use App\Domains\BinPack\ValueObjects\API\Item;
+use App\Domains\BinPack\ValueObjects\Product;
 use GuzzleHttp\Client;
 use Psr\Http\Client\ClientExceptionInterface;
 
@@ -34,32 +37,83 @@ class BinPackApiApi implements BinPackApiInterface
                 'json' => [
                     'username' => $this->username,
                     'api_key' => $this->apiKey,
-                    'items' => $input->products,
-                    'bins' => $input->boxes,
+                    'items' => $input->items,
+                    'bins' => $input->bins,
                 ]
             ]);
 
-            $output = new PackShipmentOutput();
-
             $body = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
 
-            /** @var array{} $bin */
-            foreach ($body['response']['bins_packed'] ?? [] as $packed) {
-                $bin = $packed['bin_data'];
 
-                $output->bins[] = new Bin(
-                    id: $bin['id'],
-                    width: $bin['w'],
-                    height: $bin['h'],
-                    length: $bin['d'],
-                    maxWeight: $bin['used_weight'],
-                    weight: $bin['weight'],
-                );
-            }
+            $output = new PackShipmentOutput();
+            $output->bins = $this->parseBinsFromApi($body['response']['bins_packed'] ?? []);
 
             return $output;
         } catch (ClientExceptionInterface $exception) {
-            throw new ApiErrorException();
+            throw ApiErrorException::make($exception->getMessage());
         }
+    }
+
+    /**
+     * @param Product[] $products
+     * @return Item[]
+     */
+    public function parseItemsFromProduct(array $products): array
+    {
+        $results = [];
+
+        foreach ($products as $product) {
+            $results[] = new Item(
+                id: $product->id,
+                width: $product->width,
+                height: $product->height,
+                length: $product->length,
+                weight: $product->weight,
+            );
+        }
+
+        return $results;
+    }
+
+    /**
+     * @param Packaging[] $packages
+     * @return Bin[]
+     */
+    public function parseBinsFromPackaging(array $packages): array
+    {
+        $results = [];
+
+        foreach ($packages as $package) {
+            $results[] = new Bin(
+                id: $package->getId(),
+                width: $package->getWidth(),
+                height: $package->getHeight(),
+                length: $package->getLength(),
+                maxWeight: $package->getMaxWeight(),
+            );
+        }
+
+        return $results;
+    }
+
+    protected function parseBinsFromApi(array $packed): array
+    {
+        $results = [];
+
+        foreach ($packed as $b) {
+            /** @var array<string, mixed> $b */
+
+            $bin = $b['bin_data'];
+            $results[] = new Bin(
+                id: $bin['id'],
+                width: $bin['w'],
+                height: $bin['h'],
+                length: $bin['d'],
+                maxWeight: $bin['used_weight'],
+                weight: $bin['weight'],
+            );
+        }
+
+        return $results;
     }
 }

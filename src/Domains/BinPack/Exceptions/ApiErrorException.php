@@ -7,16 +7,8 @@ namespace App\Domains\BinPack\Exceptions;
  *
  * basic http errors given by the api
  */
-class ApiErrorException extends \Exception
+class ApiErrorException extends CommonException
 {
     public string $errorCode = 'api_error';
     public string $errorMessage = 'An error occurred while communicating with the BinPack API.';
-
-    public static function make(string $code, string $errorMessage): self
-    {
-        $exception = new ApiErrorException($errorMessage);
-        $exception->errorCode = $code;
-        $exception->errorMessage = $errorMessage;
-        return $exception;
-    }
 }

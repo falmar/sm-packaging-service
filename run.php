@@ -1,6 +1,7 @@
 <?php
 
 use App\Application;
+use App\Domains\BinPack\BinPackServiceInterface;
 use GuzzleHttp\Psr7\Message;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
@@ -8,16 +9,13 @@ use GuzzleHttp\Psr7\Uri;
 /** @var \Psr\Container\ContainerInterface $container */
 $container = require __DIR__ . '/src/bootstrap.php';
 
-/** @var \Doctrine\ORM\EntityManagerInterface $entityManager */
-$entityManager = $container->get(\Doctrine\ORM\EntityManagerInterface::class);
-/** @var \App\Domains\BinPack\BinPackApiInterface $binPacker */
-$binPacker = $container->get(\App\Domains\BinPack\BinPackApiInterface::class);
+/** @var BinPackServiceInterface $binPacker */
+$binPacker = $container->get(BinPackServiceInterface::class);
 
 $request = new Request('POST', new Uri('http://localhost/pack'), ['Content-Type' => 'application/json'], $argv[1]);
 
 $application = new Application(
-    entityManager: $entityManager,
-    binPacker: $binPacker
+    service: $binPacker
 );
 $response = $application->run($request);
 

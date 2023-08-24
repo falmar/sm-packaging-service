@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Entity;
+namespace App\Domains\BinPack\Entities;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-class Packaging
+class Packaging implements \JsonSerializable
 {
-
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue]
@@ -87,5 +86,24 @@ class Packaging
     {
         $this->maxWeight = $maxWeight;
         return $this;
+    }
+
+    public function getVolume(): float
+    {
+        return $this->width * $this->height * $this->length;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'width' => $this->width,
+            'height' => $this->height,
+            'length' => $this->length,
+            'max_weight' => $this->maxWeight,
+        ];
     }
 }

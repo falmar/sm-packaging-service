@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\ValueObjects;
+namespace App\Domains\BinPack\ValueObjects\API;
 
 class Item implements \JsonSerializable
 {
@@ -30,6 +30,9 @@ class Item implements \JsonSerializable
         $this->verticalRotation = $verticalRotation;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [
@@ -43,6 +46,9 @@ class Item implements \JsonSerializable
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function jsonSerialize(): array
     {
         return $this->toArray();

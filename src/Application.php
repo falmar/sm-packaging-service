@@ -2,124 +2,106 @@
 
 namespace App;
 
-use App\Domains\BinPack\BinPackApiInterface;
-use App\Domains\BinPack\Specs\PackShipmentInput;
-use App\Domains\ValueObjects\Bin;
-use App\Domains\ValueObjects\Item;
-use App\Entity\Packaging;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Domains\BinPack\BinPackServiceInterface;
+use App\Domains\BinPack\Entities\Packaging;
+use App\Domains\BinPack\Exceptions\CommonException;
+use App\Domains\BinPack\Exceptions\PackagingNotFound;
+use App\Domains\BinPack\ValueObjects\Product;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class Application
 {
-    private EntityManagerInterface $entityManager;
-    private BinPackApiInterface $binPacker;
+    private BinPackServiceInterface $service;
 
     public function __construct(
-        EntityManagerInterface $entityManager,
-        BinPackApiInterface $binPacker
+        BinPackServiceInterface $service
     ) {
-        $this->entityManager = $entityManager;
-        $this->binPacker = $binPacker;
+        $this->service = $service;
     }
 
+    /**
+     * @param RequestInterface $request
+     * @return ResponseInterface
+     * @throws \JsonException
+     */
     public function run(RequestInterface $request): ResponseInterface
     {
-        $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        $content = $request->getBody()->getContents();
+        $body = $this->jsonDecode($content);
 
-        [$items, $dimensions] = $this->parseProducts($body['products']);
-        $bins = $this->getMatchingBins($dimensions);
+        $products = [];
+        foreach ($body['products'] as $p) {
+            $products[] = new Product(
+                id: $p['id'],
+                width: $p['width'],
+                height: $p['height'],
+                length: $p['length'],
+                weight: $p['weight'],
+            );
+        }
 
-        $spec = new PackShipmentInput();
-        $spec->products = $items;
-        $spec->boxes = $bins;
+        $httpStatus = 200;
+        $body = null;
 
-        $out = $this->binPacker->packShipment($spec);
+        try {
+            $package = $this->service->getSmallestBoxForProducts(
+                $products
+            );
 
-        $response = new Response();
+            $body = $this->jsonEncode($package);
+        } catch (PackagingNotFound $e) {
+            $httpStatus = 404;
+            $body = $this->jsonEncodeError($e);
+        } catch (\Exception $exception) {
+            $httpStatus = 500;
 
-        $response->getBody()->write(json_encode(['boxes' => $out->bins], JSON_THROW_ON_ERROR));
+            if ($exception instanceof CommonException) {
+                $body = $this->jsonEncodeError($exception);
+            } else {
+                $body = $this->jsonEncodeError(new CommonException($exception->getMessage()));
+            }
+        }
+
+        $response = (new Response())
+            ->withStatus($httpStatus)
+            ->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write($body);
 
         return $response;
     }
 
     /**
-     * @param array $products
-     * @return array
+     * @param string $content
+     * @return array<string, mixed>
+     * @throws \JsonException
      */
-    protected function parseProducts(array $products): array
+    protected function jsonDecode(string $content): array
     {
-        $results = [];
-        $maxDimensions = [
-            'width' => 0,
-            'height' => 0,
-            'length' => 0,
-            'weight' => 0,
-        ];
-
-        foreach ($products as $product) {
-            $results[] = new Item(
-                id: $product['id'],
-                width: $product['width'],
-                height: $product['height'],
-                length: $product['length'],
-                weight: $product['weight']
-            );
-
-            if ($product['width'] > $maxDimensions['width']) {
-                $maxDimensions['width'] = $product['width'];
-            }
-            if ($product['height'] > $maxDimensions['height']) {
-                $maxDimensions['height'] = $product['height'];
-            }
-            if ($product['length'] > $maxDimensions['length']) {
-                $maxDimensions['length'] = $product['length'];
-            }
-            if ($product['weight'] > $maxDimensions['weight']) {
-                $maxDimensions['weight'] = $product['weight'];
-            }
-        }
-
-        return [$results, $maxDimensions];
+        return json_decode($content, true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
-     * @param array $dimensions
-     * @return array
+     * @param Packaging $packaging
+     * @return string
+     * @throws \JsonException
      */
-    protected function getMatchingBins(array $dimensions): array
+    protected function jsonEncode(Packaging $packaging): string
     {
-        $query = $this->entityManager
-            ->createQueryBuilder()
-            ->select('p')
-            ->from(Packaging::class, 'p')
-            ->where('p.width >= :width')
-            ->andWhere('p.height >= :height')
-            ->andWhere('p.length >= :length')
-            ->andWhere('p.maxWeight >= :weight')
-            ->setParameter('width', $dimensions['width'])
-            ->setParameter('height', $dimensions['height'])
-            ->setParameter('length', $dimensions['length'])
-            ->setParameter('weight', $dimensions['weight'])
-            ->getQuery();
+        return json_encode($packaging, JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT);
+    }
 
-        $result = $query->getResult();
-        $mapped = [];
-
-        /** @var Packaging $packaging */
-        foreach ($result as $packaging) {
-            $mapped[] = new Bin(
-                id: $packaging->getId(),
-                width: $packaging->getWidth(),
-                height: $packaging->getHeight(),
-                length: $packaging->getLength(),
-                maxWeight: $packaging->getMaxWeight(),
-                weight: 0,
-            );
-        }
-
-        return $mapped;
+    /**
+     * @param CommonException $e
+     * @return string
+     * @throws \JsonException
+     */
+    protected function jsonEncodeError(CommonException $e): string
+    {
+        return json_encode([
+            'code' => $e->errorCode,
+            'message' => $e->errorMessage,
+        ], JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT);
     }
 }
