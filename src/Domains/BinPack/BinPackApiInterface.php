@@ -4,8 +4,8 @@ namespace App\Domains\BinPack;
 
 use App\Domains\BinPack\Entities\Packaging;
 use App\Domains\BinPack\Exceptions\ApiErrorException;
-use App\Domains\BinPack\Specs\PackShipmentInput;
-use App\Domains\BinPack\Specs\PackShipmentOutput;
+use App\Domains\BinPack\Specs\API\PackShipmentInput;
+use App\Domains\BinPack\Specs\API\PackShipmentOutput;
 use App\Domains\BinPack\ValueObjects\API\Bin;
 use App\Domains\BinPack\ValueObjects\API\Item;
 use App\Domains\BinPack\ValueObjects\Product;

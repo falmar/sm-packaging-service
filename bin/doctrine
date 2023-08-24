@@ -1,0 +1,17 @@
+#!/usr/bin/env php
+<?php
+
+use Doctrine\ORM\Tools\Console\ConsoleRunner;
+use Doctrine\ORM\Tools\Console\EntityManagerProvider\SingleManagerProvider;
+
+/** @var \Psr\Container\ContainerInterface $container */
+$container = require_once 'src/bootstrap.php';
+
+$entityManager = $container->get(\Doctrine\ORM\EntityManagerInterface::class);
+
+$commands = [];
+
+ConsoleRunner::run(
+    new SingleManagerProvider($entityManager),
+    $commands
+);

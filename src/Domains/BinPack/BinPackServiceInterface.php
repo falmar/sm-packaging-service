@@ -16,4 +16,18 @@ interface BinPackServiceInterface
      * @throws PackagingNotFound
      */
     public function getSmallestBoxForProducts(array $products): Packaging;
+
+    /**
+     * @param string $hash
+     * @return Packaging
+     * @throws PackagingNotFound
+     */
+    public function getCachedPackaging(string $hash): Packaging;
+
+    /**
+     * @param string $hash
+     * @param Packaging $packaging
+     * @return void
+     */
+    public function saveCachedPackaging(string $hash, Packaging $packaging): void;
 }

@@ -29,6 +29,24 @@ class Application
     public function run(RequestInterface $request): ResponseInterface
     {
         $content = $request->getBody()->getContents();
+        $hash = hash('sha256', $content);
+
+        try {
+            $package = $this->service->getCachedPackaging($hash);
+
+            $response = (new Response())
+                ->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write(
+                $this->jsonEncode($package)
+            );
+
+            // package found we can return early
+            return $response;
+        } catch (PackagingNotFound $e) {
+            $package = null;
+        }
+
         $body = $this->jsonDecode($content);
 
         $products = [];
@@ -51,6 +69,10 @@ class Application
             );
 
             $body = $this->jsonEncode($package);
+
+            // save the package to cache
+            // should send this to a queue
+            $this->service->saveCachedPackaging($hash, $package);
         } catch (PackagingNotFound $e) {
             $httpStatus = 404;
             $body = $this->jsonEncodeError($e);
@@ -89,7 +111,7 @@ class Application
      */
     protected function jsonEncode(Packaging $packaging): string
     {
-        return json_encode($packaging, JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT);
+        return json_encode($packaging, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
     }
 
     /**
@@ -102,6 +124,6 @@ class Application
         return json_encode([
             'code' => $e->errorCode,
             'message' => $e->errorMessage,
-        ], JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT);
+        ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
     }
 }

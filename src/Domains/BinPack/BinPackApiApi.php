@@ -4,8 +4,8 @@ namespace App\Domains\BinPack;
 
 use App\Domains\BinPack\Entities\Packaging;
 use App\Domains\BinPack\Exceptions\ApiErrorException;
-use App\Domains\BinPack\Specs\PackShipmentInput;
-use App\Domains\BinPack\Specs\PackShipmentOutput;
+use App\Domains\BinPack\Specs\API\PackShipmentInput;
+use App\Domains\BinPack\Specs\API\PackShipmentOutput;
 use App\Domains\BinPack\ValueObjects\API\Bin;
 use App\Domains\BinPack\ValueObjects\API\Item;
 use App\Domains\BinPack\ValueObjects\Product;
@@ -34,12 +34,12 @@ class BinPackApiApi implements BinPackApiInterface
     {
         try {
             $response = $this->client->post('/packer/packIntoMany', [
-                'json' => json_encode([
+                'json' => [
                     'username' => $this->username,
                     'api_key' => $this->apiKey,
                     'items' => $input->items,
                     'bins' => $input->bins,
-                ]),
+                ],
             ]);
 
             $body = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);

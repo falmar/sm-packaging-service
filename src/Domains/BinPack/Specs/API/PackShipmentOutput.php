@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\BinPack\Specs;
+namespace App\Domains\BinPack\Specs\API;
 
 use App\Domains\BinPack\ValueObjects\API\Bin;
 

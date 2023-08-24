@@ -2,10 +2,11 @@
 
 namespace App\Domains\BinPack;
 
+use App\Domains\BinPack\Entities\CachedPackaging;
 use App\Domains\BinPack\Entities\Packaging;
 use App\Domains\BinPack\Exceptions\ApiErrorException;
 use App\Domains\BinPack\Exceptions\PackagingNotFound;
-use App\Domains\BinPack\Specs\PackShipmentInput;
+use App\Domains\BinPack\Specs\API\PackShipmentInput;
 use App\Domains\BinPack\ValueObjects\Dimensions;
 use App\Domains\BinPack\ValueObjects\Product;
 use Doctrine\ORM\EntityManagerInterface;
@@ -73,6 +74,36 @@ class BinPackService implements BinPackServiceInterface
 
             return $suitablePackaging[0];
         }
+    }
+
+    public function getCachedPackaging(string $hash): Packaging
+    {
+        $query = $this->entityManager->createQueryBuilder()
+            ->select('c')
+            ->from(CachedPackaging::class, 'c')
+            ->where('c.inputHash = :input_hash')
+            ->setParameter('input_hash', $hash)
+            ->getQuery();
+
+        /** @var CachedPackaging $cached */
+        $cached = $query->getOneOrNullResult();
+
+        if (!$cached || !$cached->getPackaging()) {
+            throw PackagingNotFound::make('No packaging found');
+        }
+
+        return $cached->getPackaging();
+    }
+
+    public function saveCachedPackaging($hash, Packaging $packaging): void
+    {
+        $cachedPackaging = new CachedPackaging();
+        $cachedPackaging->setInputHash($hash);
+        $cachedPackaging->setPackaging($packaging);
+        $cachedPackaging->setExpiredAt(new \DateTime('+1 day'));
+
+        $this->entityManager->persist($cachedPackaging);
+        $this->entityManager->flush();
     }
 
     /**
