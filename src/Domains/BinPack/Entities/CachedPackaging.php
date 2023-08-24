@@ -14,7 +14,7 @@ class CachedPackaging
     #[ORM\GeneratedValue]
     private ?int $id = null;
 
-    #[ORM\Column(name: "input_hash", type: Types::STRING)]
+    #[ORM\Column(name: "input_hash", type: Types::STRING, unique: true)]
     private string $inputHash;
 
     #[ORM\ManyToOne(targetEntity: Packaging::class)]
@@ -74,6 +74,4 @@ class CachedPackaging
         $this->expiredAt = $expiredAt;
         return $this;
     }
-
-    // Getters, Setters and other methods
 }

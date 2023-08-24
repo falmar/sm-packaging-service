@@ -76,13 +76,20 @@ class BinPackService implements BinPackServiceInterface
         }
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getCachedPackaging(string $hash): Packaging
     {
+        $now = new \DateTimeImmutable();
+
         $query = $this->entityManager->createQueryBuilder()
             ->select('c')
             ->from(CachedPackaging::class, 'c')
             ->where('c.inputHash = :input_hash')
+            ->andWhere('c.expiredAt > :now')
             ->setParameter('input_hash', $hash)
+            ->setParameter('now', $now)
             ->getQuery();
 
         /** @var CachedPackaging $cached */
@@ -95,14 +102,28 @@ class BinPackService implements BinPackServiceInterface
         return $cached->getPackaging();
     }
 
+    /**
+     * @inheritDoc
+     */
     public function saveCachedPackaging($hash, Packaging $packaging): void
     {
-        $cachedPackaging = new CachedPackaging();
-        $cachedPackaging->setInputHash($hash);
-        $cachedPackaging->setPackaging($packaging);
-        $cachedPackaging->setExpiredAt(new \DateTime('+1 day'));
+        $query = $this->entityManager->createQueryBuilder()
+            ->select('c')
+            ->from(CachedPackaging::class, 'c')
+            ->where('c.inputHash = :input_hash')
+            ->setParameter('input_hash', $hash)
+            ->getQuery();
 
-        $this->entityManager->persist($cachedPackaging);
+        /** @var CachedPackaging $cached */
+
+        if (!($cached = $query->getOneOrNullResult())) {
+            $cached = new CachedPackaging();
+            $cached->setInputHash($hash);
+        }
+
+        $cached->setPackaging($packaging);
+        $cached->setExpiredAt(new \DateTime('+1 day'));
+        $this->entityManager->persist($cached);
         $this->entityManager->flush();
     }
 

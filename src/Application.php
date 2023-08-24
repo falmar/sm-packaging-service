@@ -82,7 +82,7 @@ class Application
             if ($exception instanceof CommonException) {
                 $body = $this->jsonEncodeError($exception);
             } else {
-                $body = $this->jsonEncodeError(new CommonException($exception->getMessage()));
+                $body = $this->jsonEncodeError(CommonException::make($exception->getMessage()));
             }
         }
 
