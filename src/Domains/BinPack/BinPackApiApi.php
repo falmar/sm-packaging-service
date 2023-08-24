@@ -34,16 +34,19 @@ class BinPackApiApi implements BinPackApiInterface
     {
         try {
             $response = $this->client->post('/packer/packIntoMany', [
-                'json' => [
+                'json' => json_encode([
                     'username' => $this->username,
                     'api_key' => $this->apiKey,
                     'items' => $input->items,
                     'bins' => $input->bins,
-                ]
+                ]),
             ]);
 
             $body = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
 
+            if ($error = $this->getApiError($body['response']['errors'] ?? [])) {
+                throw ApiErrorException::make($error);
+            }
 
             $output = new PackShipmentOutput();
             $output->bins = $this->parseBinsFromApi($body['response']['bins_packed'] ?? []);
@@ -96,6 +99,10 @@ class BinPackApiApi implements BinPackApiInterface
         return $results;
     }
 
+    /**
+     * @param array<string, mixed> $packed
+     * @return Bin[]
+     */
     protected function parseBinsFromApi(array $packed): array
     {
         $results = [];
@@ -115,5 +122,22 @@ class BinPackApiApi implements BinPackApiInterface
         }
 
         return $results;
+    }
+
+    /**
+     * Jump at first encounter of critical or notice error.
+     *
+     * @param array<string, mixed> $errors
+     * @return string
+     */
+    protected function getApiError(array $errors): string
+    {
+        foreach ($errors as $error) {
+            if ($error['level'] == 'critical' || $error['level'] == 'notice') {
+                return $error['message'];
+            }
+        }
+
+        return '';
     }
 }

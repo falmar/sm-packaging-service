@@ -6,7 +6,6 @@ use App\Domains\BinPack\Entities\Packaging;
 use App\Domains\BinPack\Exceptions\ApiErrorException;
 use App\Domains\BinPack\Exceptions\PackagingNotFound;
 use App\Domains\BinPack\Specs\PackShipmentInput;
-use App\Domains\BinPack\ValueObjects\API\Bin;
 use App\Domains\BinPack\ValueObjects\Dimensions;
 use App\Domains\BinPack\ValueObjects\Product;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,7 +36,9 @@ class BinPackService implements BinPackServiceInterface
         $suitablePackaging = $this->getSuitablePackagingByDimensions($dimensions);
 
         if (!$suitablePackaging) {
-            throw new PackagingNotFound();
+            throw PackagingNotFound::make(
+                'No suitable packaging found for the given products'
+            );
         }
 
         try {
@@ -48,26 +49,25 @@ class BinPackService implements BinPackServiceInterface
                 )
             )->bins;
 
+            if (!$bins) {
+                throw PackagingNotFound::make('No packaging found');
+            }
+
             usort($bins, fn($a, $b) => $a->usedVolume <=> $b->usedVolume);
 
-            /** @var ?Packaging $packaging */
+            /** @var Packaging $packaging */
             $packaging = null;
 
-            foreach ($bins as $bin) {
-                foreach ($suitablePackaging as $p) {
-                    if ($p->getId() === $bin->id) {
-                        $packaging = $p;
-                        break;
-                    }
+            foreach ($suitablePackaging as $p) {
+                if ($p->getId() === $bins[0]->id) {
+                    $packaging = $p;
+                    break;
                 }
             }
 
-            if (!$packaging) {
-                throw new PackagingNotFound('No suitable packaging found');
-            }
-
             return $packaging;
-        } catch (ApiErrorException $apiErrorException) {
+        } catch (ApiErrorException) {
+            // report error, log "using default fallback"
             // assume api is down, try to find a smallest suitable packaging from database
             usort($suitablePackaging, fn($a, $b) => $a->getVolume() <=> $b->getVolume());
 

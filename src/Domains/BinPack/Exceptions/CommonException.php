@@ -9,11 +9,12 @@ class CommonException extends \Exception
 
     /**
      * @param string $errorMessage
-     * @return self
+     * @return static
      */
-    public static function make(string $errorMessage): self
+    public static function make(string $errorMessage): static
     {
-        $exception = new CommonException($errorMessage);
+        // @phpstan-ignore-next-line
+        $exception = new static($errorMessage);
         $exception->errorMessage = $errorMessage;
         return $exception;
     }
