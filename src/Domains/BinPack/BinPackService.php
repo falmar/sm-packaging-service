@@ -148,7 +148,7 @@ class BinPackService implements BinPackServiceInterface
     }
 
     /**
-     * Obtain the smallest box that can fit the given dimensions.
+     * Obtain the smallest packaging that can fit the given dimensions.
      *
      * @param Dimensions $dimensions
      * @return Packaging[]

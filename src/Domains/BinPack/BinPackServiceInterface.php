@@ -9,7 +9,7 @@ use App\Domains\BinPack\ValueObjects\Product;
 interface BinPackServiceInterface
 {
     /**
-     * Obtain the smallest box that can fit the given products.
+     * Obtain the smallest packaging that can fit the given products.
      *
      * @param Product[] $products
      * @return Packaging
