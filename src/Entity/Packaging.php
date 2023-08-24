@@ -34,4 +34,58 @@ class Packaging
         $this->maxWeight = $maxWeight;
     }
 
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function setId(?int $id): Packaging
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getWidth(): float
+    {
+        return $this->width;
+    }
+
+    public function setWidth(float $width): Packaging
+    {
+        $this->width = $width;
+        return $this;
+    }
+
+    public function getHeight(): float
+    {
+        return $this->height;
+    }
+
+    public function setHeight(float $height): Packaging
+    {
+        $this->height = $height;
+        return $this;
+    }
+
+    public function getLength(): float
+    {
+        return $this->length;
+    }
+
+    public function setLength(float $length): Packaging
+    {
+        $this->length = $length;
+        return $this;
+    }
+
+    public function getMaxWeight(): float
+    {
+        return $this->maxWeight;
+    }
+
+    public function setMaxWeight(float $maxWeight): Packaging
+    {
+        $this->maxWeight = $maxWeight;
+        return $this;
+    }
 }
