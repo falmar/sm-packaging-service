@@ -47,7 +47,7 @@ class CachedPackaging
     }
 
     /**
-     * @return mixed
+     * @return Packaging
      */
     public function getPackaging(): Packaging
     {
@@ -55,7 +55,7 @@ class CachedPackaging
     }
 
     /**
-     * @param mixed $packaging
+     * @param Packaging $packaging
      * @return CachedPackaging
      */
     public function setPackaging(Packaging $packaging): self

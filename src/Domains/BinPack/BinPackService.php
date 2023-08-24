@@ -92,10 +92,9 @@ class BinPackService implements BinPackServiceInterface
             ->setParameter('now', $now)
             ->getQuery();
 
-        /** @var CachedPackaging $cached */
+        /** @var ?CachedPackaging $cached */
         $cached = $query->getOneOrNullResult();
-
-        if (!$cached || !$cached->getPackaging()) {
+        if (!$cached?->getPackaging()) {
             throw PackagingNotFound::make('No packaging found');
         }
 
@@ -114,9 +113,9 @@ class BinPackService implements BinPackServiceInterface
             ->setParameter('input_hash', $hash)
             ->getQuery();
 
-        /** @var CachedPackaging $cached */
-
-        if (!($cached = $query->getOneOrNullResult())) {
+        /** @var ?CachedPackaging $cached */
+        $cached = $query->getOneOrNullResult();
+        if (!$cached) {
             $cached = new CachedPackaging();
             $cached->setInputHash($hash);
         }
